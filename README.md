@@ -2,7 +2,7 @@
 
 Hey there! This is a template repository that contains the necessary boilerplate for [CS 131](https://ucla-cs-131.github.io/spring-23/)'s quarter-long project: making an interpreter. The project specs are as follows:
 
-1. Project 1 Spec
+1. [Project 1 Spec](https://docs.google.com/document/d/1pPQ2qZKbbsbZGBSwvuy1Ir-NZLPMgVt95WPQuI5aPho)
 
 There are three stages to the project; students are currently at the first. Thus, this folder contains the necessary bootstrapping code:
 
