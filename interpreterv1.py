@@ -1,6 +1,8 @@
+#!/usr/bin/python3
+
 from bparser import BParser
 from intbase import InterpreterBase, ErrorType
-globalC = 10
+#globalC = 10
 def getObj(val):
     if (isinstance(val, list)):
         if (val[0] == "begin"):
@@ -22,10 +24,12 @@ def getVal(val, vars, classDef, printV=False):
                 if (printV):
                     return vars[val.value].printVal
                 return vars[val.value].value
-            else:
+            elif(val.value in classDef.fields):
                 if (printV):
                     return classDef.fields[val.value].printVal
                 return classDef.fields[val.value].value
+            else:
+                classDef.interpreter.error(ErrorType.NAME_ERROR)
         else:
             if (printV):
                 return val.printVal
@@ -52,7 +56,7 @@ class Statement():
             return classDef.fields[ind]
 
     def process_expression(self, vars, classDef):
-        global globalC
+        #global globalC
         #print("Processing Expression!")
         curExpr = self.expression
         command = curExpr[0]
@@ -76,15 +80,20 @@ class Statement():
 
 ###################################################################################
         elif(command == "+"):
-            vals = [] 
-            for i in range(1, len(curExpr)):
-                if (not isinstance(curExpr[i], Value)):
-                    vals.append(curExpr[i].process_expression(vars, classDef))
-                else:
-                   vals.append(getVal(curExpr[i], vars, classDef))
-            curVal = 0
-            for i in vals:
-                curVal += i
+            if (not isinstance(curExpr[1], Value)):
+                firstExpr = curExpr[1].process_expression(vars, classDef)
+            else:
+                firstExpr = getVal(curExpr[1], vars, classDef)
+
+            if (not isinstance(curExpr[2], Value)):
+                secondExpr = curExpr[2].process_expression(vars, classDef)
+            else:
+                secondExpr = getVal(curExpr[2], vars, classDef)
+
+            if ((not isinstance(firstExpr, str) and not isinstance(firstExpr, int)) or (type(secondExpr) != type(firstExpr))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
+
+            curVal = firstExpr + secondExpr
 ###################################################################################
         elif(command == "-"):
             if (not isinstance(curExpr[1], Value)):
@@ -97,6 +106,8 @@ class Statement():
             else:
                 secondExpr = getVal(curExpr[2], vars, classDef)
 
+            if ((not isinstance(firstExpr, int)) or (not isinstance(secondExpr, int))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
             return (firstExpr - secondExpr)
 ###################################################################################
         elif(command == "*"):
@@ -109,24 +120,26 @@ class Statement():
                 secondExpr = curExpr[2].process_expression(vars, classDef)
             else:
                 secondExpr = getVal(curExpr[2], vars, classDef)
+
+            if ((not isinstance(firstExpr, int)) or (not isinstance(secondExpr, int))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
             return firstExpr * secondExpr
 ###################################################################################
         elif(command == "/"):
-            vals = [] 
             if (not isinstance(curExpr[1], Value)):
-                startExpr = curExpr[1].process_expression(vars, classDef)
+                firstExpr = curExpr[1].process_expression(vars, classDef)
             else:
-                startExpr = getVal(curExpr[1], vars, classDef)
+                firstExpr = getVal(curExpr[1], vars, classDef)
+   
+            if (not isinstance(curExpr[2], Value)):
+                secondExpr = curExpr[2].process_expression(vars, classDef)
+            else:
+                secondExpr = getVal(curExpr[2], vars, classDef)
 
-            for i in range(2, len(curExpr)):
-                if (not isinstance(curExpr[i], Value)):
-                    vals.append(curExpr[i].process_expression(vars, classDef))
-                else:
-                   vals.append(getVal(curExpr[i], vars, classDef))
-
-            curVal = startExpr
-            for i in vals:
-                curVal /= i
+            if ((not isinstance(firstExpr, int)) or (not isinstance(secondExpr, int))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
+            
+            curVal = firstExpr / secondExpr
 ###################################################################################
         elif(command == "%"):
             if (not isinstance(curExpr[1], Value)):
@@ -139,6 +152,9 @@ class Statement():
             else:
                 secondExpr = getVal(curExpr[2], vars, classDef)
             
+            if ((not isinstance(firstExpr, int)) or (not isinstance(secondExpr, int))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
+
             curVal = firstExpr % secondExpr
 ###################################################################################
         elif(command == ">"):
@@ -152,6 +168,9 @@ class Statement():
             else:
                 secondExpr = getVal(curExpr[2], vars, classDef)
             
+            if ((not isinstance(firstExpr, str) and not isinstance(firstExpr, int)) or (type(secondExpr) != type(firstExpr))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
+
             curVal = firstExpr > secondExpr
 ###################################################################################
         elif(command == "<"):
@@ -164,7 +183,9 @@ class Statement():
                 secondExpr = curExpr[2].process_expression(vars, classDef)
             else:
                 secondExpr = getVal(curExpr[2], vars, classDef)
-            
+
+            if ((not isinstance(firstExpr, str) and not isinstance(firstExpr, int)) or (type(secondExpr) != type(firstExpr))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
             curVal = firstExpr < secondExpr
 ###################################################################################
         elif(command == ">="):
@@ -177,7 +198,8 @@ class Statement():
                 secondExpr = curExpr[2].process_expression(vars, classDef)
             else:
                 secondExpr = getVal(curExpr[2], vars, classDef)
-            
+            if ((not isinstance(firstExpr, str) and not isinstance(firstExpr, int)) or (type(secondExpr) != type(firstExpr))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
             curVal = firstExpr >= secondExpr
 ###################################################################################
         elif(command == "<="):
@@ -190,7 +212,8 @@ class Statement():
                 secondExpr = curExpr[2].process_expression(vars, classDef)
             else:
                 secondExpr = getVal(curExpr[2], vars, classDef)
-            
+            if ((not isinstance(firstExpr, str) and not isinstance(firstExpr, int)) or (type(secondExpr) != type(firstExpr))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
             curVal = firstExpr <= secondExpr
 
 ###################################################################################
@@ -204,8 +227,62 @@ class Statement():
                 secondExpr = curExpr[2].process_expression(vars, classDef)
             else:
                 secondExpr = getVal(curExpr[2], vars, classDef)
-            
+            if (((   not isinstance(firstExpr, str) and not isinstance(firstExpr, bool) and not isinstance(firstExpr, int)) or (type(secondExpr) != type(firstExpr))) and ((not isinstance(firstExpr, Class) and not isinstance(secondExpr, None)) or (not isinstance(secondExpr, Class) and not isinstance(firstExpr, None)))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
             return firstExpr == secondExpr
+
+###################################################################################
+        elif(command == "!="):
+            if (not isinstance(curExpr[1], Value)):
+                firstExpr = curExpr[1].process_expression(vars, classDef)
+            else:
+                firstExpr = getVal(curExpr[1], vars, classDef)
+
+            if (not isinstance(curExpr[2], Value)):
+                secondExpr = curExpr[2].process_expression(vars, classDef)
+            else:
+                secondExpr = getVal(curExpr[2], vars, classDef)
+            if (((   not isinstance(firstExpr, str) and not isinstance(firstExpr, bool) and not isinstance(firstExpr, int)) or (type(secondExpr) != type(firstExpr))) and ((not isinstance(firstExpr, Class) and not isinstance(secondExpr, None)) or (not isinstance(secondExpr, Class) and not isinstance(firstExpr, None)))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
+            return firstExpr != secondExpr
+###################################################################################
+        elif(command == "&"):
+            if (not isinstance(curExpr[1], Value)):
+                firstExpr = curExpr[1].process_expression(vars, classDef)
+            else:
+                firstExpr = getVal(curExpr[1], vars, classDef)
+
+            if (not isinstance(curExpr[2], Value)):
+                secondExpr = curExpr[2].process_expression(vars, classDef)
+            else:
+                secondExpr = getVal(curExpr[2], vars, classDef)
+            if ((not isinstance(firstExpr, bool)) or (not isinstance(secondExpr, bool))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
+            return firstExpr and secondExpr
+###################################################################################
+        elif(command == "|"):
+            if (not isinstance(curExpr[1], Value)):
+                firstExpr = curExpr[1].process_expression(vars, classDef)
+            else:
+                firstExpr = getVal(curExpr[1], vars, classDef)
+
+            if (not isinstance(curExpr[2], Value)):
+                secondExpr = curExpr[2].process_expression(vars, classDef)
+            else:
+                secondExpr = getVal(curExpr[2], vars, classDef)
+            if ((not isinstance(firstExpr, bool)) or (not isinstance(secondExpr, bool))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
+            return firstExpr or secondExpr
+###################################################################################
+        elif(command == "!"):
+            if (not isinstance(curExpr[1], Value)):
+                firstExpr = curExpr[1].process_expression(vars, classDef)
+            else:
+                firstExpr = getVal(curExpr[1], vars, classDef)
+
+            if ((not isinstance(firstExpr, bool))):
+                    classDef.interpreter.error(ErrorType.TYPE_ERROR)
+            return not firstExpr
 ###################################################################################
         elif(command == "call"):
             if (not isinstance(curExpr[1], Value)):
@@ -232,9 +309,16 @@ class Statement():
             if (firstExpr == "me"):
                 curVal = classDef.method_call(methodName, paramList)
             elif (firstExpr in vars):
+                if (not isinstance(firstExpr[vars], Class)):
+                    classDef.interpreter.error(ErrorType.FAULT_ERROR)
                 curVal = vars[firstExpr].method_call(methodName, paramList)
-            else:
+            elif(firstExpr in classDef.fields):
+                if (not isinstance(firstExpr[vars], Class)):
+                    classDef.interpreter.error(ErrorType.FAULT_ERROR)
                 curVal = classDef.fields[firstExpr].method_call(methodName, paramList)
+            else:
+                classDef.interpreter.error(ErrorType.NAME_ERROR)
+
 ###################################################################################
         elif (command == "new"):
             if (not isinstance(curExpr[1], Value)):
@@ -243,8 +327,11 @@ class Statement():
                 firstExpr = curExpr[1].value
 
 
-            if (firstExpr in classDict):
-                curVal = classDict[firstExpr](firstExpr, classDef.interpreter)
+            if (firstExpr in Environment.classDict):
+                curVal = Environment.classDict[firstExpr](firstExpr, classDef.interpreter)
+            else:
+                classDef.interpreter.error(ErrorType.TYPE_ERROR)
+
 ###################################################################################
         elif (command == "set"):
             if (not isinstance(curExpr[1], Value)):
@@ -259,11 +346,13 @@ class Statement():
 
             if (firstExpr in vars):
                 vars[firstExpr] = getObj(secondExpr)
-                print(vars[firstExpr].printVal)
-            else:
+                #print(vars[firstExpr].printVal)
+            elif(firstExpr in classDef.fields):
                 classDef.fields[firstExpr] = getObj(secondExpr)
-                print( classDef.fields[firstExpr].printVal)
-
+                #print( classDef.fields[firstExpr].printVal)
+            else:
+                classDef.interpreter.error(ErrorType.NAME_ERROR)
+ 
             return
 ###################################################################################
         elif (command == "inputi"):
@@ -279,14 +368,16 @@ class Statement():
             return
 ###################################################################################
         elif (command == "if"):
-            globalC -= 1
+            #globalC -= 1
             if (not isinstance(curExpr[1], Value)):
                 firstExpr = curExpr[1].process_expression(vars, classDef)
             else:
                 firstExpr = getVal(curExpr[1], vars, classDef)
 
             retVal = None
-
+            if (not isinstance(firstExpr, bool)):
+                classDef.interpreter.error(ErrorType.TYPE_ERROR)
+                
             if (firstExpr):
                 if (2 < len(curExpr) and not isinstance(curExpr[2], Value)):
                     retVal = curExpr[2].process_expression(vars, classDef)
@@ -304,6 +395,9 @@ class Statement():
 
 ###################################################################################
         elif (command == "while"):
+            boolExp = curExpr[1].process_expression(vars, classDef)
+            if (not isinstance(boolExp, bool)):
+                classDef.interpreter.error(ErrorType.TYPE_ERROR)
             while (curExpr[1] and curExpr[1].process_expression(vars, classDef)):         
                 if (not isinstance(curExpr[2], Value)):
                     secondExpr = curExpr[1].process_expression(vars, classDef)
@@ -311,7 +405,7 @@ class Statement():
                     secondExpr = getVal(curExpr[1], vars, classDef)
 
 
-        #TODO: IMPLEMENT FIELDS AND VARS! IMPELMENT FUNCTIONS:  !=, &, |, !
+        #TODO: IMPLEMENT FIELDS AND VARS! IMPELMENT FUNCTIONS:  
         
         return curVal
 
@@ -323,9 +417,9 @@ class StatementBlock():
         self.expr = [Statement.create_statement(val[x]) for x in range(1,len(val))]
     
     def process_expression(self, vars, classDef):
-        print("Processing Begin Block!")
+       # print("Processing Begin Block!")
         for expr in self.expr:
-            print(expr.expression)
+            #print(expr.expression)
             if (expr.expression[0] == "return"):
                 return expr.process_expression(vars, classDef)
             else:
@@ -333,39 +427,41 @@ class StatementBlock():
 
 
 
-classDict = {}
+#classDict = {}
 
 class Class():
     def __init__(self, class_name, interpreter):
         self.name = class_name
         self.interpreter = interpreter
-        self.fields = {x : (getObj(val)) for x, val in classDict[class_name]["Fields"].items()} #classDict[class_name]["Fields"]
-        print(self.fields)
-        self.methods = {x : Method(val, self) for x, val in classDict[class_name]["Methods"].items()}
-        print("Class!")
+        self.fields = {x : (getObj(val)) for x, val in Environment.classDict[class_name]["Fields"].items()} #Environment.classDict[class_name]["Fields"]
+       # print(self.fields)
+        self.methods = {x : Method(val, self) for x, val in Environment.classDict[class_name]["Methods"].items()}
+       # print("Class!")
 
     def process_class(class_info):
         class_name = class_info[1]
-        classDict[class_name] = {
+        Environment.classDict[class_name] = {
             "Name" : class_name,
             "Methods" : {},
             "Fields" : {}
         }
         for entry in class_info:
             if (entry[0] == 'method'):
-                classDict[class_name]["Methods"][entry[1]] = {
+                Environment.classDict[class_name]["Methods"][entry[1]] = {
                     "Name" : entry[1],
                     "Parameters" : entry[2],
                     "Expression" : entry[3]
                 }
             elif (entry[0] == 'field'):
-                classDict[class_name]["Fields"][entry[1]] = entry[2]
+                Environment.classDict[class_name]["Fields"][entry[1]] = entry[2]
 
     def method_call(self, method_name, params):
+        if (not method_name in self.methods):
+            self.interpreter.error(ErrorType.NAME_ERROR)
         return self.methods[method_name].process_method(self.fields, params) 
     
-    def print(self, val):
-        print(val)
+    #def print(self, val):
+     #   print(val)
 
 
 class Method():
@@ -374,23 +470,25 @@ class Method():
         self.params = method_info["Parameters"]
         self.expression = Statement.create_statement(method_info["Expression"]) 
         self.classDef = classDef
-        print("Method!")
+        #print("Method!")
     
     def process_method(self, class_fields, params):
         if (self.params):
+            if (len(self.params) != len(params)):
+                self.interpreter.error(ErrorType.TYPE_ERROR)
             vars = {x: getObj(val) for x,val in zip(self.params, params)}
             for i in self.params:
                 if (i not in vars):
                     vars[i] = "null" 
         else:
             vars = {}
-        print("Processing Method!")
+       # print("Processing Method!")
         return self.expression.process_expression(vars, self.classDef)
         
 
-class Variable():
-    def __init__(self):
-        print("Variable!")
+#class Variable():
+ #   def __init__(self):
+ #       print("Variable!")
 
 class Value():
     def __init__(self, val):
@@ -408,6 +506,8 @@ class Value():
             self.type = "String"
             self.printVal = val[1:-1]
         elif (val == "null"):
+            self.value = None
+            self.printVal = "null"
             self.type = "None"
         else:
             try:
@@ -424,57 +524,45 @@ class Interpreter(InterpreterBase):
     def run(self, program):
         result, parsed_program = BParser.parse(program)
         if result == False:
-            print('Parsing failed. There must have been a mismatched parenthesis.')
+            #print('Parsing failed. There must have been a mismatched parenthesis.')
             return 1
     
         for class_def in parsed_program:
             Class.process_class(class_def)
 
         main_object = Class("main", super())
-        print(classDict)
+        #print(Environment.classDict)
         main_object.method_call("main", [])
+        return 0
 
 class Environment():
-    methodDict = {}
-    #classDict = {}
+    classDict = {}
 
-
-def main():
-  # all programs will be provided to your interpreter as a list of 
-  # python strings, just as shown here.
-    program_source = ['(class main',
-                    ' (method main ()',
-                    '   (print  (- 1 2))',
-                    ' ) # end of method',
-                    ') # end of class',
-                    '(class coolio',
-                    ' (field num 2)',
-                    ' (method main2 (n)',
-                    '   (call me main2 "hello world!")',
-                    ' ) # end of method',
-                    ') # end of class']
+# def main():
+#   # all programs will be provided to your interpreter as a list of 
+#   # python strings, just as shown here.
+#     program_source = ['(class main',
+#                     ' (method main ()',
+#                     '   (print  (- 1 2))',
+#                     ' ) # end of method',
+#                     ') # end of class',
+#                     '(class coolio',
+#                     ' (field num 2)',
+#                     ' (method main2 (n)',
+#                     '   (call me main2 "hello world!")',
+#                     ' ) # end of method',
+#                     ') # end of class']
  
-    # this is how you use our BParser class to parse a valid 
-    # Brewin program into python list format.
-    result, parsed_program = BParser.parse(program_source)
-    print(parsed_program)
-    if result == False:
-        print('Parsing failed. There must have been a mismatched parenthesis.')
-        return 1
+#     # this is how you use our BParser class to parse a valid 
+#     # Brewin program into python list format.
+#     result, parsed_program = BParser.parse(program_source)
+#     print(parsed_program)
+#     if result == False:
+#         print('Parsing failed. There must have been a mismatched parenthesis.')
+#         return 1
     
-    interpreterObj = Interpreter()
-    interpreterObj.run(program_source)
+#     interpreterObj = Interpreter()
+#     interpreterObj.run(program_source)
 
-
-if __name__ == "__main__":
-    main()
-
-# {'main': {'Name': 'main', 
-# 'Methods': {'fact': {'Name': 'fact', 
-#               'Parameters': ['n'], 
-#                   'Expression': ['if', ['==', 'n', '1'], 
-#                                   ['return', '1'],
-#                                    ['return', ['*', 'n', ['call', 'me', 'fact', ['-', 'n', '1']]]]]}, 
-# 'main': {'Name': 'main', 
-#              'Parameters': [],
-#                'Expression': ['print', ['call', 'me', 'fact', '5']]}}, 'Fields': {}}}
+#if __name__ == "__main__":
+#  main()
