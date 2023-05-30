@@ -69,7 +69,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                         call_dict["exc"] = True
                         return v
                     v = (v, curExpr[1].process_expression(vars, classDef, local_vars=local_vars, get_type=True)) # Return the value of the expression and its type
-
+                    return v
                 elif (curExpr[1].value == InterpreterBase.ME_DEF):
                     return (classDef.get_inst_class(), classDef.name)
                 else:
@@ -200,6 +200,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 call_dict["ret"] = True
                 call_dict["exc"] = True
                 return secondExpr        
+
             if  (isinstance(firstExpr, Class) and isinstance(secondExpr, Class) and (secondExpr.check_type(firstExpr.name) or firstExpr.check_type(secondExpr.name))): # If both of the compared objects are classes of compatible types
                 if (command == Interpreter.OPERATOR_EQUAL):
                     return firstExpr is secondExpr
@@ -386,17 +387,36 @@ class Statement(): # In charge of holding and evaluating a single expression
             else:
                 firstExpr =  curExpr[1].value
 
+            if (firstExpr in classDef.TemplateVars.keys()):
+                firstExpr = classDef.TemplateVars[firstExpr]
+
             if (get_type):
-                return firstExpr
+                finStr = (firstExpr.split('@'))[0]
+
+                if (len(firstExpr.split('@')) > 1):
+                    for t in (firstExpr.split('@')[1:]):
+                        v = t
+                        if (t in classDef.TemplateVars.keys()):
+                            v = classDef.TemplateVars[t]
+                        finStr = finStr + '@' + v
+                return finStr
                 
             if (try_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
                 return firstExpr
+            
+            finStr = (firstExpr.split('@'))[0]
 
+            if (len(firstExpr.split('@')) > 1):
+                for t in (firstExpr.split('@')[1:]):
+                    v = t
+                    if (t in classDef.TemplateVars.keys()):
+                        v = classDef.TemplateVars[t]
+                    finStr = finStr + '@' + v
 
             if ((firstExpr.split('@'))[0] in classDef.interpreter.classDict):
-                return Class(firstExpr, classDef.interpreter)
+                return Class(finStr, classDef.interpreter)
             else:
                 classDef.interpreter.error(ErrorType.TYPE_ERROR)
 ###################################################################################
@@ -542,12 +562,12 @@ class Statement(): # In charge of holding and evaluating a single expression
                 if (2 < len(curExpr) and not isinstance(curExpr[2], Value)):
                     ret_val = curExpr[2].process_expression(vars, classDef, call_dict=loop_call_dict, local_vars=local_vars)
                 elif (2 < len(curExpr)):
-                    ret_val = Value.getVal(curExpr[2], vars,local_vars, classDef, loop_call_dict)
+                    ret_val = Value.getVal(curExpr[2], vars,local_vars, classDef)
             else:
                 if (3 < len(curExpr) and not isinstance(curExpr[3], Value)):
                     ret_val = curExpr[3].process_expression(vars, classDef, call_dict=loop_call_dict, local_vars=local_vars)
                 elif (3 < len(curExpr)):
-                    ret_val = Value.getVal(curExpr[3], vars,local_vars, classDef,loop_call_dict)
+                    ret_val = Value.getVal(curExpr[3], vars,local_vars, classDef)
 
             if (loop_call_dict["exc"]):
                 call_dict["ret"] = True
@@ -580,7 +600,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 if (not isinstance(curExpr[2], Value)):
                     ret_val = curExpr[2].process_expression(vars, classDef, call_dict=loop_call_dict, local_vars=local_vars)
                 else:
-                    ret_val = Value.getVal(curExpr[2], vars,local_vars, classDef, loop_call_dict)
+                    ret_val = Value.getVal(curExpr[2], vars,local_vars, classDef)
 
                 if ((curExpr[2]).expression[0] == InterpreterBase.RETURN_DEF or loop_call_dict["ret"] or loop_call_dict["exc"]):
 
@@ -611,12 +631,15 @@ class Statement(): # In charge of holding and evaluating a single expression
             if (try_dict["exc"]):
                 try_dict = {"ret" : False, "exc" : False}
                 local_vars.insert(0, {"exception" : {"Type" : InterpreterBase.STRING_DEF, "Value" : (Value.getObj(ret_val, classDef))}})
-                v = curExpr[2].process_expression(vars, classDef, call_dict=try_dict, local_vars=local_vars)
+                ret_val = curExpr[2].process_expression(vars, classDef, call_dict=try_dict, local_vars=local_vars)
                 local_vars.pop(0)
                 if (try_dict["exc"]):
                     call_dict["ret"] = True
                     call_dict["exc"] = True
-                    return v
+                    return ret_val
+            if (try_dict["ret"]):
+                call_dict["ret"] = True
+                return ret_val
 ###################################################################################
         elif (command == InterpreterBase.THROW_DEF):
             call_dict["exc"] = True
@@ -660,24 +683,35 @@ class StatementBlock(): # Used to store begin blocks
             for x in val[1]:
                 if (x[1] in self.local_vars.keys()):
                     self.classDef.interpreter.error(ErrorType.NAME_ERROR)
+                var_type = x[0]
+                finStr = (var_type.split('@'))[0]
+
+                if (len(var_type.split('@')) > 1):
+                    for t in (var_type.split('@')[1:]):
+                        v = t
+                        if (t in classDef.TemplateVars.keys()):
+                            v = classDef.TemplateVars[t]
+                        finStr = finStr + '@' + v
+                var_type = finStr
+                if (var_type in classDef.TemplateVars.keys()):
+                    var_type = classDef.TemplateVars[(var_type)]
+
                 if len(x) < 3:
-                    if (x[0] == InterpreterBase.INT_DEF):
+                    if (var_type == InterpreterBase.INT_DEF):
                         var_val = '0'
-                    elif (x[0] == InterpreterBase.BOOL_DEF):
+                    elif (var_type == InterpreterBase.BOOL_DEF):
                         var_val = InterpreterBase.FALSE_DEF
-                    elif (x[0] == InterpreterBase.STRING_DEF):
+                    elif (var_type == InterpreterBase.STRING_DEF):
                         var_val = '""'
                     else:
                         var_val =  InterpreterBase.NULL_DEF
                 else:
                     var_val = x[2]
-                var_type = x[0]
-                if (var_type in classDef.TemplateVars.keys()):
-                    var_type = classDef.TemplateVars[(var_type)]
+
 
                 if ((var_type not in Interpreter.prim_types or var_type == InterpreterBase.VOID_DEF) and not Class.is_valid_template(var_type, self.classDef.interpreter) and var_type not in self.classDef.TemplateVars):
                     self.classDef.interpreter.error(ErrorType.TYPE_ERROR)
-                    
+                
                 self.local_vars[x[1]] = {"Type" : var_type, "Value" : Value.getObj(var_val, classDef)}
 
             for i in self.local_vars.keys(): # double check types
@@ -703,10 +737,13 @@ class StatementBlock(): # Used to store begin blocks
 
         for expr in self.expr:
             if (expr.expression[0] == InterpreterBase.RETURN_DEF): # if its a return expression then set the return flag to true and return
-                val = expr.process_expression(vars, classDef, local_vars=local_vars, exception_stack=exception_stack)
+                val = expr.process_expression(vars, classDef, call_dict=local_call_dict, local_vars=local_vars, exception_stack=exception_stack)
+
+                #print("HEE HEE: ", val)
                 if(call_dict):
                     call_dict["ret"] = True
                 if(local_call_dict["exc"]):
+                    call_dict["ret"] = True
                     call_dict["exc"] = True
                 local_vars.pop(0)
 
@@ -748,10 +785,12 @@ class Class(): # Class object to create instances of classes
                 self.interpreter.error(ErrorType.TYPE_ERROR)
             if (len(self.name.split('@')) > 1):  
                 converted_vars = (self.name.split('@'))[1:]
-
-                self.TemplateVars = {x : y for x, y in zip(template_vars, converted_vars)}
+                for x, y in zip(template_vars, converted_vars):
+                    self.TemplateVars[x] = y
+                #self.TemplateVars = {x : y for x, y in zip(template_vars, converted_vars)}
                 for t_type in self.TemplateVars.values():
                     if ((t_type not in Interpreter.prim_types or t_type == InterpreterBase.VOID_DEF) and (t_type not in interpreter.classDict)):
+                        #print(class_name)
                         self.interpreter.error(ErrorType.TYPE_ERROR)
 
         #print(self.name)
@@ -761,6 +800,16 @@ class Class(): # Class object to create instances of classes
         self.fields = {}
         for x, val in interpreter.classDict[class_name]["Fields"].items():
             var_type = val["Type"]
+
+            finStr = (var_type.split('@'))[0]
+
+            if (len(var_type.split('@')) > 1):
+                for t in (var_type.split('@')[1:]):
+                    v = t
+                    if (t in self.TemplateVars.keys()):
+                        v = self.TemplateVars[t]
+                    finStr = finStr + '@' + v
+            var_type = finStr
             if (var_type in self.TemplateVars.keys()):
                 var_type = self.TemplateVars[(var_type)]
 
@@ -770,7 +819,7 @@ class Class(): # Class object to create instances of classes
             if (x in self.fields.keys()):
                 self.interpreter.error(ErrorType.NAME_ERROR)
 
-            if (val["Value"] == InterpreterBase.NULL_DEF):
+            if (val["Value"] is None):
                 if (var_type == InterpreterBase.INT_DEF):
                     var_val = '0'
                 elif (var_type == InterpreterBase.BOOL_DEF):
@@ -790,6 +839,7 @@ class Class(): # Class object to create instances of classes
          #   if (self.fields[i]["Type"] in self.TemplateVars.keys()):
               #  self.fields[i]["Type"] = self.TemplateVars[(self.fields[i]["Type"])]
             if (not self.fields[i]["Value"].check_type(self.fields[i]["Type"])):
+                print(self.fields[i]["Value"].type, self.fields[i]["Type"])
                 self.interpreter.error(ErrorType.TYPE_ERROR)
         #print(self.fields)
         self.methods =  {x : Method(val, self) for x, val in interpreter.classDict[class_name]["Methods"].items()} # Generate a dictionary of methods in class each of which contain a method object 
@@ -829,14 +879,7 @@ class Class(): # Class object to create instances of classes
                     "Type" : entry[1]
                 }
                 if len(entry) < 4:
-                    if (entry[1] == InterpreterBase.INT_DEF):
-                        var_val = '0'
-                    elif (entry[1] == InterpreterBase.BOOL_DEF):
-                        var_val = InterpreterBase.FALSE_DEF
-                    elif (entry[1] == InterpreterBase.STRING_DEF):
-                        var_val = '""'
-                    else:
-                        var_val =  InterpreterBase.NULL_DEF
+                    var_val = None
                 else:
                     var_val = entry[3]
                 interpreter.classDict[class_name]["Fields"][entry[2]]["Value"] = var_val
@@ -889,6 +932,17 @@ class Method(): # Handles class methods
     def __init__(self, method_info, classDef):
         self.name = method_info["Name"]
         self.return_type = method_info["ReturnType"]
+
+        finStr = (self.return_type.split('@'))[0]
+
+        if (len(self.return_type.split('@')) > 1):
+            for t in (self.return_type.split('@')[1:]):
+                v = t
+                if (t in classDef.TemplateVars.keys()):
+                    v = classDef.TemplateVars[t]
+                finStr = finStr + '@' + v
+        self.return_type = finStr
+
         if (self.return_type in classDef.TemplateVars.keys()):
             self.return_type = classDef.TemplateVars[(self.return_type)]
         if ((self.return_type not in Interpreter.prim_types) and (self.return_type.split('@'))[0] not in classDef.interpreter.classDict): # check if it is a valid return type
@@ -921,7 +975,23 @@ class Method(): # Handles class methods
                 else:
                     self.classDef.interpreter.error(ErrorType.NAME_ERROR)
             if (no_skip):
-                vars = {x[1]: {"Type" : x[0], "Value" : Value.getObj(val, self.classDef)} for x,val in zip(self.params, params)}
+                vars = {} 
+                for x, val in zip(self.params, params): 
+                                                        #{x[1]: {"Type" : x[0], "Value" : Value.getObj(val, self.classDef)} for x,val in zip(self.params, params)}
+                    val_type = x[0]
+                    finStr = (val_type.split('@'))[0]
+
+                    if (len(val_type.split('@')) > 1):
+                        for t in (val_type.split('@')[1:]):
+                            v = t
+                            if (t in self.classDef.TemplateVars.keys()):
+                                v = self.classDef.TemplateVars[t]
+                            finStr = finStr + '@' + v
+                    val_type = finStr
+                    #vars[i]["Type"] = finStr
+
+
+                    vars[x[1]] = {"Type" : val_type, "Value" : Value.getObj(val,self.classDef)}
                 for i in vars.keys(): # check if types match, if they do not try to call a superclass if it exists, else throw an error
                     if (vars[i]["Type"] in self.classDef.TemplateVars.keys()):
                         vars[i]["Type"] = self.classDef.TemplateVars[(vars[i]["Type"])]
@@ -996,7 +1066,7 @@ class Method(): # Handles class methods
                     self.classDef.interpreter.error(ErrorType.TYPE_ERROR)
                 if (not Class.compare_class_types(self.return_type, ret_type, self.classDef.interpreter)):
                     self.classDef.interpreter.error(ErrorType.TYPE_ERROR)
-
+            #print("VAL" , ret_val)
             if (not ret_val): # if not return type then return the default 
                 if (self.return_type == InterpreterBase.VOID_DEF):
                     return
@@ -1147,6 +1217,7 @@ class Interpreter(InterpreterBase):
     OPERATOR_LOGIC_AND = '&'
     OPERATOR_LOGIC_OR = '|'
     OPERATOR_NOT = '!'
+
     typeTable = {
         '+' : "Check",
         '-' : InterpreterBase.INT_DEF,
