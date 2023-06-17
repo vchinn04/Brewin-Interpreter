@@ -13,4 +13,4 @@ The Interpreter was written by Victor Chinnappan. This Professor and the TAs pro
 
 This is an unlicensed repository; even though the source code is public, it is **not** governed by an open-source license.
 
-This code was primarily written by Victor Chinnappan, with support from the course's TAs for the [Spring 2023 iteration of CS 131](https://ucla-cs-131.github.io/spring-23/) and Professor [Carey Nachenberg](http://careynachenberg.weebly.com/) who created the Parser and the InterpreterBase class.
+This code was primarily written by Victor Chinnappan, with support from the course's TAs for the [Spring 2023 iteration of CS 131](https://ucla-cs-131.github.io/spring-23/) and Professor [Carey Nachenberg](http://careynachenberg.weebly.com/) who created the Parser and the InterpreterBase class. Some tests were written by other individuals including, course staff, classmates, and myself.
