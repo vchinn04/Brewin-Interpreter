@@ -9,9 +9,11 @@ Brewin# -> Exception Catching and Throwing, Templated Classes (Parametric Polymo
 
 The Interpreter was written by Victor Chinnappan. This Professor and the TAs provided the parser and a InterpreterBase class which is used to make the interpreter testable with their Autograder.
 
-To run tests:
+**To run tests using autograder:**
 Brewin -> ```$ python3 tester.py 1```
+
 Brewin++ -> ```$ python3 tester.py 2```
+
 Brewin# -> ```$ python3 tester.py 3```
 
 ## Licensing and Attribution
