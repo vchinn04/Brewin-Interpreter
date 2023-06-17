@@ -44,7 +44,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 print_string += str(print_val)
             classDef.interpreter.output(print_string)
 ###################################################################################
-        elif (command == InterpreterBase.RETURN_DEF): # Process the return comand and set the return flag to true if passed it
+        elif (command == InterpreterBase.RETURN_DEF): # Process the return comand and set the return flag to true if passed it. Return a tuple of the value and its type
             if ("ret" in call_dict):
                 call_dict["ret"] = True
 
@@ -52,8 +52,8 @@ class Statement(): # In charge of holding and evaluating a single expression
                 if (isinstance(curExpr[1], Class)):
                     return (curExpr[1], curExpr[1].name)
                 elif (not isinstance(curExpr[1], Value)):
-                    return (curExpr[1].process_expression(vars, classDef, local_vars=local_vars), curExpr[1].process_expression(vars, classDef, local_vars=local_vars, get_type=True))
-                elif (curExpr[1].value == "me"):
+                    return (curExpr[1].process_expression(vars, classDef, local_vars=local_vars), curExpr[1].process_expression(vars, classDef, local_vars=local_vars, get_type=True)) # Return the value of the expression and its type
+                elif (curExpr[1].value == InterpreterBase.ME_DEF):
                     return (classDef.get_inst_class(), classDef.name)
                 else:
                     return (Value.getVal(curExpr[1], vars, local_vars, classDef), Value.get_string_type(curExpr[1], vars, local_vars, classDef))
@@ -134,9 +134,10 @@ class Statement(): # In charge of holding and evaluating a single expression
             else:
                 ret_val = firstExpr <= secondExpr
 ###################################################################################
-        elif(command == Interpreter.OPERATOR_EQUAL or command == Interpreter.OPERATOR_NOT_EQUAL):
+        elif(command == Interpreter.OPERATOR_EQUAL or command == Interpreter.OPERATOR_NOT_EQUAL): # (==) and (!=) operators
             if (get_type):
                 return InterpreterBase.BOOL_DEF
+
             if (not isinstance(curExpr[1], Value)):
                 firstExpr = curExpr[1].process_expression(vars, classDef, local_vars=local_vars)
             else:
@@ -147,17 +148,17 @@ class Statement(): # In charge of holding and evaluating a single expression
             else:
                 secondExpr = Value.getVal(curExpr[2], vars,local_vars, classDef)
             
-
-            # Check if any of the possible combinations match
-            if  (isinstance(firstExpr, Class) and isinstance(secondExpr, Class) and (secondExpr.check_type(firstExpr.name) or firstExpr.check_type(secondExpr.name))):
+            if  (isinstance(firstExpr, Class) and isinstance(secondExpr, Class) and (secondExpr.check_type(firstExpr.name) or firstExpr.check_type(secondExpr.name))): # If both of the compared objects are classes of compatible types
                 if (command == Interpreter.OPERATOR_EQUAL):
                     return firstExpr is secondExpr
                 else:
                     return firstExpr is not secondExpr
-            elif(isinstance(firstExpr, Class) and isinstance(secondExpr, Class)):
+            elif(isinstance(firstExpr, Class) and isinstance(secondExpr, Class)): 
                 classDef.interpreter.error(ErrorType.TYPE_ERROR)
 
-            if  (((isinstance(firstExpr, Class) or (firstExpr is None)) and (isinstance(secondExpr, Class) or (secondExpr is None)))):
+            if  (((isinstance(firstExpr, Class) or (firstExpr is None)) and (isinstance(secondExpr, Class) or (secondExpr is None)))): # if one of the objects is a class and the other null
+
+                #Get  the types of both objects (or their variable types)
                 if (not isinstance(curExpr[1], Value)):
                     firs_type = curExpr[1].process_expression(vars, classDef, local_vars=local_vars, get_type=True)
                 else:
@@ -168,8 +169,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 else:
                     second_type = Value.get_string_type(curExpr[2], vars, local_vars, classDef)
                 
-
-                if (Class.compare_class_types(firs_type, second_type, classDef.interpreter, class1_obj=firstExpr, class2_obj=secondExpr)):
+                if (Class.compare_class_types(firs_type, second_type, classDef.interpreter, class1_obj=firstExpr, class2_obj=secondExpr)): # compare the two types
                     if (command == Interpreter.OPERATOR_EQUAL):
                         return firstExpr is secondExpr
                     else:
@@ -177,6 +177,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 else:
                     classDef.interpreter.error(ErrorType.TYPE_ERROR)
 
+            # Check if all of the possible combinations do not match
             if ((not (isinstance(firstExpr, str) and isinstance(secondExpr, str))) and (not (type(firstExpr) == type(True) and type(secondExpr) == type(True))) and (not ((type(firstExpr) == type(0)) and (type(secondExpr) == type(0)))) and (not (firstExpr is None and ((secondExpr is None) or isinstance(secondExpr, Class)))) and (not (secondExpr is None and ((firstExpr is None) or isinstance(firstExpr, Class))))):
                 classDef.interpreter.error(ErrorType.TYPE_ERROR)
 
@@ -188,6 +189,7 @@ class Statement(): # In charge of holding and evaluating a single expression
         elif(command == Interpreter.OPERATOR_LOGIC_AND or command == Interpreter.OPERATOR_LOGIC_OR): # Logic and (&) and logic or (|) operators
             if (get_type):
                 return InterpreterBase.BOOL_DEF
+
             if (not isinstance(curExpr[1], Value)):
                 firstExpr = curExpr[1].process_expression(vars, classDef, local_vars=local_vars)
             else:
@@ -206,7 +208,7 @@ class Statement(): # In charge of holding and evaluating a single expression
             else:
                 ret_val = firstExpr or secondExpr
 ###################################################################################
-        elif(command == Interpreter.OPERATOR_NOT): # Not operator that works only on vools
+        elif(command == Interpreter.OPERATOR_NOT): # Not operator that works only on bools
             if (get_type):
                 return InterpreterBase.BOOL_DEF
             if (not isinstance(curExpr[1], Value)):
@@ -233,7 +235,7 @@ class Statement(): # In charge of holding and evaluating a single expression
             paramList = []
             for arg in curExpr[3:]: # Generate a list of the values to be passed in to the called method
                 if (isinstance(arg, Class)):
-                    paramList.append(arg) # Class(arg.name, classDef.interpreter)ss
+                    paramList.append(arg)
                 elif (isinstance(arg, Method)):
                     v = Value.getVal(Value.getObj(arg.process_method(vars, classDef), classDef), vars,local_vars, classDef)
                     if (v == None or type(v) == type(True)):
@@ -249,8 +251,8 @@ class Statement(): # In charge of holding and evaluating a single expression
                         paramList.append(str(v))
                 else:
                     v = Value.getVal(arg, vars,local_vars, classDef)
-                    if (isinstance(v, Class)): # Copy of class since we are doing pass by value
-                        paramList.append(v) #Class(Value.getVal(arg, vars,local_vars, classDef).name, classDef.interpreter)
+                    if (isinstance(v, Class)): # Just append the val if its a class
+                        paramList.append(v)
                     else:
                         if (v == None or type(v) == type(True)):
                             paramList.append(v)
@@ -267,7 +269,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 ret_val = classDef.method_call(methodName, paramList, callSuper=True, get_type=get_type)
                 return ret_val               
                 
-            for entr in local_vars:
+            for entr in local_vars: # check if there are any let vars
                 if (firstExpr in entr):
                     if (not isinstance(entr[firstExpr]["Value"], Class)):
                         classDef.interpreter.error(ErrorType.FAULT_ERROR)
@@ -312,11 +314,10 @@ class Statement(): # In charge of holding and evaluating a single expression
             else:
                 secondExpr = Value.getVal(curExpr[2], vars,local_vars, classDef)
             
-
             for entr in local_vars:
                 if (firstExpr in entr):
                     try_val = Value.getObj(secondExpr, classDef)
-                    if (entr[firstExpr]["Type"] not in Interpreter.prim_types):
+                    if (entr[firstExpr]["Type"] not in Interpreter.prim_types): # make sure if its a class type that it is compatible
                         if (not isinstance(curExpr[2], Value)):
                             second_type = curExpr[2].process_expression(vars, classDef, local_vars=local_vars, get_type=True)
                         else:
@@ -332,19 +333,20 @@ class Statement(): # In charge of holding and evaluating a single expression
                     return 
 
             if (firstExpr in vars): # If its a paramenter set the object to the parameter var
-                if (vars[firstExpr]["Type"] not in Interpreter.prim_types):
+                if (vars[firstExpr]["Type"] not in Interpreter.prim_types): # make sure if its a class type that it is compatible
                     if (not isinstance(curExpr[2], Value)):
                         second_type = curExpr[2].process_expression(vars, classDef, local_vars=local_vars, get_type=True)
                     else:
                         second_type = Value.get_string_type(curExpr[2], vars,local_vars, classDef)
                     if (not Class.compare_class_types(vars[firstExpr]["Type"], second_type, classDef.interpreter)):
                         classDef.interpreter.error(ErrorType.TYPE_ERROR)
+
                 vars[firstExpr]["Value"] = Value.getObj(secondExpr, classDef)
 
                 if (not vars[firstExpr]["Value"].check_type(vars[firstExpr]["Type"])):
                     classDef.interpreter.error(ErrorType.TYPE_ERROR)
             elif(firstExpr in classDef.fields): # check in class
-                if ( classDef.fields[firstExpr]["Type"] not in Interpreter.prim_types):
+                if (classDef.fields[firstExpr]["Type"] not in Interpreter.prim_types):# make sure if its a class type that it is compatible
                     if (not isinstance(curExpr[2], Value)):
                         second_type = curExpr[2].process_expression(vars, classDef, local_vars=local_vars, get_type=True)
                     else:
@@ -375,7 +377,6 @@ class Statement(): # In charge of holding and evaluating a single expression
             if (firstExpr in vars):
                 if (vars[firstExpr]["Type"] != InterpreterBase.INT_DEF):
                     classDef.interpreter.error(ErrorType.TYPE_ERROR)
-
                 vars[firstExpr]["Value"] = Value.getObj(classDef.interpreter.get_input(), classDef)
             elif(firstExpr in classDef.fields):
                 if (classDef.fields[firstExpr]["Type"] != InterpreterBase.INT_DEF):
@@ -409,7 +410,6 @@ class Statement(): # In charge of holding and evaluating a single expression
             elif (firstExpr in classDef.fields):
                 if (classDef.fields[firstExpr]["Type"] != InterpreterBase.STRING_DEF):
                     classDef.interpreter.error(ErrorType.TYPE_ERROR)
-
                 classDef.fields[firstExpr]["Value"] = Value.getObj(inputStr, classDef)
             else:
                 classDef.interpreter.error(ErrorType.NAME_ERROR)        
@@ -430,7 +430,6 @@ class Statement(): # In charge of holding and evaluating a single expression
                     ret_val = curExpr[2].process_expression(vars, classDef,loop_call_dict, local_vars=local_vars)
                 elif (2 < len(curExpr)):
                     ret_val = Value.getVal(curExpr[2], vars,local_vars, classDef, loop_call_dict)
-
             else:
                 if (3 < len(curExpr) and not isinstance(curExpr[3], Value)):
                     ret_val = curExpr[3].process_expression(vars, classDef,loop_call_dict, local_vars=local_vars)
@@ -472,21 +471,16 @@ class Statement(): # In charge of holding and evaluating a single expression
        
         return ret_val
         
-    def check_type(self, type_name):
+    def check_type(self, type_name): # Return the type of expression (under ideal circustances not called)
             if (not self.type):
                 return False
             if (self.type == "Check"):
-                if (self.expression[0] == '+'):
+                if (self.expression[0] == Interpreter.OPERATOR_ADDITION):
                     if (type_name == InterpreterBase.STRING_DEF or type_name == InterpreterBase.INT_DEF):
                         return True
                     else:
                         return False 
-                if (self.expression[0] == 'new'):
-                    return Class(self.expression[1].value, self.classDef.interpreter).check_type(type_name)
-                if (self.expression[0] == 'call'):
-                    return True
             return type_name == self.type
-
 
 class StatementBlock(): # Used to store begin blocks
     def __init__(self, val, classDef):
@@ -494,14 +488,14 @@ class StatementBlock(): # Used to store begin blocks
         self.local_vars = {}
         self.expr = []
         self.classDef = classDef
-        if (val[0] == "let"): 
+        if (val[0] == InterpreterBase.LET_DEF): # if it is a let statement, generate the local variables 
             self.local_vars = {}
             for x in val[1]:
                 if (x[1] in self.local_vars.keys()):
                     self.classDef.interpreter.error(ErrorType.NAME_ERROR)
                 self.local_vars[x[1]] = {"Type" : x[0], "Value" : Value.getObj(x[2], classDef)}
 
-            for i in self.local_vars.keys():
+            for i in self.local_vars.keys(): # double check types
                 if (not self.local_vars[i]["Value"].check_type(self.local_vars[i]["Type"])):
                     self.classDef.interpreter.error(ErrorType.TYPE_ERROR)
 
@@ -534,7 +528,6 @@ class StatementBlock(): # Used to store begin blocks
                     local_vars.pop(0)
                     return val
         local_vars.pop(0)
-
 
 class Class(): # Class object to create instances of classes
     def __init__(self, class_name, interpreter, sub_class=None):
@@ -585,7 +578,8 @@ class Class(): # Class object to create instances of classes
                     "Type" : entry[1],
                     "Value" : entry[3]
                 }
-    def check_type(self, type_name):
+
+    def check_type(self, type_name): # return if the class is correct type (either needed type or subclass of needed type)
         if (type_name == self.name):
             return True
         else:
@@ -594,12 +588,12 @@ class Class(): # Class object to create instances of classes
             else:
                 return False
    
-    def get_inst_class(self): 
+    def get_inst_class(self):  # Get the lowest level class (the class type that was instantiated)
         if (self.SubClass):
             return self.SubClass.get_inst_class()
         return self
 
-    def compare_class_types(class1, class2, interpreter, class1_obj=None, class2_obj=None ):
+    def compare_class_types(class1, class2, interpreter, class1_obj=None, class2_obj=None ): # Check if two class types are compatible
         if ((class1 == InterpreterBase.NULL_DEF or class1 == InterpreterBase.VOID_DEF) or (class2 == InterpreterBase.NULL_DEF or class2 == InterpreterBase.VOID_DEF)):
             return True
         if (not class1_obj):
@@ -608,10 +602,10 @@ class Class(): # Class object to create instances of classes
             class2_obj  = Class(class2, interpreter)
         return (class1_obj.check_type(class2) or class2_obj.check_type(class1))
 
-    def method_call(self, method_name, params, callSuper=False, isExpr=False, get_type=False): # Call the method if it exists
-        if (self.SubClass and isExpr):
+    def method_call(self, method_name, params, callSuper=False, isExpr=False, get_type=False): # Call the method if it exists (get_type is used to get the return type)
+        if (self.SubClass and isExpr): # call the subclass if isExpr is true
             return self.SubClass.method_call(method_name, params, isExpr=True, get_type=get_type)
-        if (method_name not in self.methods or callSuper):
+        if (method_name not in self.methods or callSuper): # if method does not exist and a superclass exists, try it, else error
             if (self.BaseClass):
                 return self.BaseClass.method_call(method_name, params, get_type=get_type)
             self.interpreter.error(ErrorType.NAME_ERROR)
@@ -622,9 +616,9 @@ class Method(): # Handles class methods
     def __init__(self, method_info, classDef):
         self.name = method_info["Name"]
         self.return_type = method_info["ReturnType"]
-        if ((self.return_type not in Interpreter.prim_types ) and self.return_type not in classDef.interpreter.classDict ):
-            classDef.interpreter.error(ErrorType.TYPE_ERROR)
 
+        if ((self.return_type not in Interpreter.prim_types) and self.return_type not in classDef.interpreter.classDict): # check if it is a valid return type
+            classDef.interpreter.error(ErrorType.TYPE_ERROR)
 
         self.params = method_info["Parameters"]
         checkParams = []
@@ -634,9 +628,8 @@ class Method(): # Handles class methods
                 classDef.interpreter.error(ErrorType.NAME_ERROR)
             else:
                 checkParams.append(i[1])
-            if ((i[0] not in Interpreter.prim_types or i[0] == InterpreterBase.VOID_DEF) and i[0] not in classDef.interpreter.classDict ):
+            if ((i[0] not in Interpreter.prim_types or i[0] == InterpreterBase.VOID_DEF) and i[0] not in classDef.interpreter.classDict):
                 classDef.interpreter.error(ErrorType.TYPE_ERROR)
-
 
         self.expression = Statement.create_statement(method_info["Expression"], self.classDef) 
         self.classDef = classDef
@@ -645,7 +638,7 @@ class Method(): # Handles class methods
         no_skip = True
 
         if (self.params):
-            if (len(self.params) != len(params)):
+            if (len(self.params) != len(params)): # if incorrect lengths try superclass else error
                 if (self.classDef.BaseClass):
                     no_skip = False
                     ret_val = self.classDef.method_call(self.name, params, callSuper=True, get_type=get_type)
@@ -653,7 +646,7 @@ class Method(): # Handles class methods
                     self.classDef.interpreter.error(ErrorType.NAME_ERROR)
             if (no_skip):
                 vars = {x[1]: {"Type" : x[0], "Value" : Value.getObj(val, self.classDef)} for x,val in zip(self.params, params)}
-                for i in vars.keys():
+                for i in vars.keys(): # check if types match, if they do not try to call a superclass if it exists, else throw an error
                     if (isinstance(vars[i]["Value"], Class)):
                         if (not vars[i]["Value"].check_type(vars[i]["Type"])):
                             if (self.classDef.BaseClass):
@@ -679,7 +672,7 @@ class Method(): # Handles class methods
                             else:
                                 self.classDef.interpreter.error(ErrorType.NAME_ERROR)
         else:
-            if (len(params) > 0):
+            if (len(params) > 0): # if incorrect lengths try superclass else error
                 if (self.classDef.BaseClass):
                     no_skip = False
                     ret_val = self.classDef.method_call(self.name, params, callSuper=True, get_type=get_type)
@@ -688,27 +681,28 @@ class Method(): # Handles class methods
             vars = {}
 
         if (no_skip):
-            if (get_type):
+            if (get_type): 
                 return self.return_type
+
             if (self.expression):
                 ret_val = self.expression.process_expression(vars, self.classDef) # Return the called top expression of method
             else:
                 ret_val = None 
             
-            if (type(ret_val) is tuple):
+            if (type(ret_val) is tuple): # If its a return from return statement unpack it
                 ret_type = ret_val[1]
                 ret_val = ret_val[0]
-            else:
+            else: # there was no return
                 ret_val = None
                 ret_type = InterpreterBase.VOID_DEF
 
-            if (ret_val is None and ret_type != InterpreterBase.VOID_DEF): # and ret_type != InterpreterBase.NULL_DEF
+            if (ret_val is None and ret_type != InterpreterBase.VOID_DEF): # if null is returned for an incompatible type
                 if (self.return_type in Interpreter.prim_types):
                     self.classDef.interpreter.error(ErrorType.TYPE_ERROR)
                 if (not Class.compare_class_types(self.return_type, ret_type, self.classDef.interpreter)):
                     self.classDef.interpreter.error(ErrorType.TYPE_ERROR)
 
-            if (not ret_val): 
+            if (not ret_val): # if not return type then return the default 
                 if (self.return_type == InterpreterBase.VOID_DEF):
                     return
                 if (self.return_type == InterpreterBase.INT_DEF):
@@ -721,7 +715,7 @@ class Method(): # Handles class methods
 
         if (not get_type):
             ret_val_obj = Value.getObj(ret_val, self.classDef)
-            if (not ret_val_obj.check_type(self.return_type) and not (ret_val_obj.check_type(InterpreterBase.NULL_DEF) and self.return_type == InterpreterBase.VOID_DEF)):
+            if (not ret_val_obj.check_type(self.return_type) and not (ret_val_obj.check_type(InterpreterBase.NULL_DEF) and self.return_type == InterpreterBase.VOID_DEF)): # double check if the return type matches the type of returned object
                 self.classDef.interpreter.error(ErrorType.TYPE_ERROR)
 
         return ret_val
@@ -806,13 +800,13 @@ class Value():
                 self.value = val 
                 self.type = Interpreter.VARIABLE_DEF
 
-    def get_string_type(val, vars,local_vars, classDef):
+    def get_string_type(val, vars,local_vars, classDef): # return the type of the variable or the type of the value
         if (isinstance(val, Class) and val is not None):
             return val.name # If its a class instance, just return it 
         if (not isinstance(val, Value)):
             return Value.getObj(val,classDef).type # if it isnt a value object, process it using getObj and retry
         else:
-            if (val.type == Interpreter.VARIABLE_DEF): # If its a variable attempt to get it, else throw error 
+            if (val.type == Interpreter.VARIABLE_DEF): # If its a variable attempt to get its type, else throw error 
                 for entr in local_vars:
                     if (val.value in entr):
                         if (isinstance(entr[val.value]["Value"], Class)):
@@ -832,12 +826,11 @@ class Value():
             else: 
                 return val.type
 
-    def check_type(self, type_name):
+    def check_type(self, type_name): # Check if the values type matches the passed in type. Return True if it does else False
             if (type_name == self.type or (type_name not in Interpreter.prim_types and self.type == InterpreterBase.NULL_DEF)):
                 return True
             else:
                 return False
-
 
 class Interpreter(InterpreterBase):
     # Constants
@@ -874,8 +867,6 @@ class Interpreter(InterpreterBase):
         '&' : InterpreterBase.BOOL_DEF,
         '|'  : InterpreterBase.BOOL_DEF,
         '!'  : InterpreterBase.BOOL_DEF,
-        'new' : "Check",
-        'call' : "Check"
     }
     prim_types = [InterpreterBase.BOOL_DEF, InterpreterBase.INT_DEF, InterpreterBase.STRING_DEF, InterpreterBase.VOID_DEF]
     # Methods

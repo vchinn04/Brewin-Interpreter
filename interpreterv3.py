@@ -13,11 +13,8 @@ class Statement(): # In charge of holding and evaluating a single expression
         self.expression = expression_list
         self.type = None
         self.classDef = classDef
-        #if (val[0] in classDef.TemplateVars.keys()):
-            #self.type = classDef.TemplateVars[val[0]]
 
     def create_statement(expression, classDef):
-        #print("EXPR: ", expression)
         if (not expression):
             return None
         if (expression[0] != InterpreterBase.BEGIN_DEF and expression[0] != InterpreterBase.LET_DEF):
@@ -118,6 +115,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 firstExpr = Value.getVal(curExpr[1].process_expression(vars, classDef, local_vars=local_vars, call_dict=try_dict), vars,local_vars, classDef)
             else:
                 firstExpr = Value.getVal(curExpr[1], vars,local_vars, classDef)
+
             if (try_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
@@ -242,12 +240,14 @@ class Statement(): # In charge of holding and evaluating a single expression
         elif(command == Interpreter.OPERATOR_LOGIC_AND or command == Interpreter.OPERATOR_LOGIC_OR): # Logic and (&) and logic or (|) operators
             if (get_type):
                 return InterpreterBase.BOOL_DEF
+
             try_dict = {"ret" : False, "exc" : False}
 
             if (not isinstance(curExpr[1], Value)):
                 firstExpr = curExpr[1].process_expression(vars, classDef, local_vars=local_vars, call_dict=try_dict)
             else:
                 firstExpr = Value.getVal(curExpr[1], vars,local_vars, classDef)
+
             if (try_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
@@ -257,6 +257,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 secondExpr = curExpr[2].process_expression(vars, classDef, local_vars=local_vars, call_dict=try_dict)
             else:
                 secondExpr = Value.getVal(curExpr[2], vars,local_vars, classDef)
+
             if (try_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
@@ -280,6 +281,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 firstExpr = curExpr[1].process_expression(vars, classDef, local_vars=local_vars, call_dict=try_dict)
             else:
                 firstExpr = Value.getVal(curExpr[1], vars,local_vars, classDef)
+                
             if (try_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
@@ -292,10 +294,12 @@ class Statement(): # In charge of holding and evaluating a single expression
 ###################################################################################
         elif(command == InterpreterBase.CALL_DEF): # Process call
             try_dict = {"ret" : False, "exc" : False}
+
             if (not isinstance(curExpr[1], Value)):
                 firstExpr = curExpr[1].process_expression(vars, classDef, local_vars=local_vars, call_dict=try_dict)
             else:
                 firstExpr = curExpr[1].value
+
             if (try_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
@@ -305,6 +309,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 methodName = curExpr[2].process_expression(vars, classDef, local_vars=local_vars, call_dict=try_dict)
             else:
                 methodName = curExpr[2].value
+                
             if (try_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
@@ -376,7 +381,6 @@ class Statement(): # In charge of holding and evaluating a single expression
                 ret_val = classDef.fields[firstExpr]["Value"].method_call(methodName, paramList, isExpr=True, get_type=get_type, try_dict=call_dict)
             else:
                 classDef.interpreter.error(ErrorType.NAME_ERROR)
-            #print(call_dict)
             return ret_val
 ###################################################################################
         elif (command == InterpreterBase.NEW_DEF): # Create an instance of a class if it exists
@@ -391,14 +395,14 @@ class Statement(): # In charge of holding and evaluating a single expression
                 firstExpr = classDef.TemplateVars[firstExpr]
 
             if (get_type):
-                finStr = (firstExpr.split('@'))[0]
+                finStr = (firstExpr.split(InterpreterBase.TYPE_CONCAT_CHAR))[0]
 
-                if (len(firstExpr.split('@')) > 1):
-                    for t in (firstExpr.split('@')[1:]):
+                if (len(firstExpr.split(InterpreterBase.TYPE_CONCAT_CHAR)) > 1):
+                    for t in (firstExpr.split(InterpreterBase.TYPE_CONCAT_CHAR)[1:]):
                         v = t
                         if (t in classDef.TemplateVars.keys()):
                             v = classDef.TemplateVars[t]
-                        finStr = finStr + '@' + v
+                        finStr = finStr + InterpreterBase.TYPE_CONCAT_CHAR + v
                 return finStr
                 
             if (try_dict["exc"]):
@@ -406,16 +410,16 @@ class Statement(): # In charge of holding and evaluating a single expression
                 call_dict["exc"] = True
                 return firstExpr
             
-            finStr = (firstExpr.split('@'))[0]
+            finStr = (firstExpr.split(InterpreterBase.TYPE_CONCAT_CHAR))[0]
 
-            if (len(firstExpr.split('@')) > 1):
-                for t in (firstExpr.split('@')[1:]):
+            if (len(firstExpr.split(InterpreterBase.TYPE_CONCAT_CHAR)) > 1):
+                for t in (firstExpr.split(InterpreterBase.TYPE_CONCAT_CHAR)[1:]):
                     v = t
                     if (t in classDef.TemplateVars.keys()):
                         v = classDef.TemplateVars[t]
-                    finStr = finStr + '@' + v
+                    finStr = finStr + InterpreterBase.TYPE_CONCAT_CHAR + v
 
-            if ((firstExpr.split('@'))[0] in classDef.interpreter.classDict):
+            if ((firstExpr.split(InterpreterBase.TYPE_CONCAT_CHAR))[0] in classDef.interpreter.classDict):
                 return Class(finStr, classDef.interpreter)
             else:
                 classDef.interpreter.error(ErrorType.TYPE_ERROR)
@@ -436,6 +440,7 @@ class Statement(): # In charge of holding and evaluating a single expression
                 secondExpr = curExpr[2].process_expression(vars, classDef, local_vars=local_vars, call_dict=try_dict)
             else:
                 secondExpr = Value.getVal(curExpr[2], vars,local_vars, classDef)
+
             if (try_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
@@ -443,7 +448,6 @@ class Statement(): # In charge of holding and evaluating a single expression
 
             for entr in local_vars:
                 if (firstExpr in entr):
-                    try_val = Value.getObj(secondExpr, classDef)
                     if (entr[firstExpr]["Type"] not in Interpreter.prim_types): # make sure if its a class type that it is compatible
                         if (not isinstance(curExpr[2], Value)):
                             second_type = curExpr[2].process_expression(vars, classDef, local_vars=local_vars, get_type=True)
@@ -542,14 +546,14 @@ class Statement(): # In charge of holding and evaluating a single expression
                 classDef.interpreter.error(ErrorType.NAME_ERROR)        
 ###################################################################################
         elif (command == InterpreterBase.IF_DEF): # IF statement evaluation
-            loop_call_dict = {"ret" : False, "exc" : False} # Store a local return flag that if set to true will break out of loop early
+            if_call_dict = {"ret" : False, "exc" : False} # Store a local return flag that if set to true will break out of loop early
 
             if (not isinstance(curExpr[1], Value)):
-                firstExpr = curExpr[1].process_expression(vars, classDef, local_vars=local_vars, call_dict=loop_call_dict)
+                firstExpr = curExpr[1].process_expression(vars, classDef, local_vars=local_vars, call_dict=if_call_dict)
             else:
                 firstExpr = Value.getVal(curExpr[1], vars,local_vars, classDef)
 
-            if (loop_call_dict["exc"]):
+            if (if_call_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
                 return firstExpr
@@ -560,21 +564,21 @@ class Statement(): # In charge of holding and evaluating a single expression
                 
             if (firstExpr):
                 if (2 < len(curExpr) and not isinstance(curExpr[2], Value)):
-                    ret_val = curExpr[2].process_expression(vars, classDef, call_dict=loop_call_dict, local_vars=local_vars)
+                    ret_val = curExpr[2].process_expression(vars, classDef, call_dict=if_call_dict, local_vars=local_vars)
                 elif (2 < len(curExpr)):
                     ret_val = Value.getVal(curExpr[2], vars,local_vars, classDef)
             else:
                 if (3 < len(curExpr) and not isinstance(curExpr[3], Value)):
-                    ret_val = curExpr[3].process_expression(vars, classDef, call_dict=loop_call_dict, local_vars=local_vars)
+                    ret_val = curExpr[3].process_expression(vars, classDef, call_dict=if_call_dict, local_vars=local_vars)
                 elif (3 < len(curExpr)):
                     ret_val = Value.getVal(curExpr[3], vars,local_vars, classDef)
 
-            if (loop_call_dict["exc"]):
+            if (if_call_dict["exc"]):
                 call_dict["ret"] = True
                 call_dict["exc"] = True
                 return ret_val
 
-            if (loop_call_dict["ret"]):
+            if (if_call_dict["ret"]):
                 if ("ret" in call_dict): # Set the passed in return flat to true if it was passed it 
                     call_dict["ret"] = True
                 return ret_val
@@ -625,14 +629,16 @@ class Statement(): # In charge of holding and evaluating a single expression
                 if (type(loop_eval_expr) != type(True)):
                     classDef.interpreter.error(ErrorType.TYPE_ERROR)
 ###################################################################################  
-        elif (command == InterpreterBase.TRY_DEF):
+        elif (command == InterpreterBase.TRY_DEF): # Handle try-catch block 
             try_dict = {"ret" : False, "exc" : False}
             ret_val = curExpr[1].process_expression(vars, classDef, try_dict, local_vars=local_vars)
-            if (try_dict["exc"]):
+            if (try_dict["exc"]): # if exception was caught
                 try_dict = {"ret" : False, "exc" : False}
-                local_vars.insert(0, {"exception" : {"Type" : InterpreterBase.STRING_DEF, "Value" : (Value.getObj(ret_val, classDef))}})
-                ret_val = curExpr[2].process_expression(vars, classDef, call_dict=try_dict, local_vars=local_vars)
-                local_vars.pop(0)
+                temp_dict = {}
+                temp_dict[InterpreterBase.EXCEPTION_VARIABLE_DEF] =  {"Type" : InterpreterBase.STRING_DEF, "Value" : (Value.getObj(ret_val, classDef))}
+                local_vars.insert(0, temp_dict) # Add exception variable
+                ret_val = curExpr[2].process_expression(vars, classDef, call_dict=try_dict, local_vars=local_vars) # Run catch
+                local_vars.pop(0) # Remove exception variable 
                 if (try_dict["exc"]):
                     call_dict["ret"] = True
                     call_dict["exc"] = True
@@ -641,12 +647,10 @@ class Statement(): # In charge of holding and evaluating a single expression
                 call_dict["ret"] = True
                 return ret_val
 ###################################################################################
-        elif (command == InterpreterBase.THROW_DEF):
+        elif (command == InterpreterBase.THROW_DEF): # Handle throw statement
             call_dict["exc"] = True
             if ("ret" in call_dict):
-                call_dict["ret"] = True
-            #print(call_dict)
-    
+                call_dict["ret"] = True    
 
             if (not isinstance(curExpr[1], Value)):
                 throw_str = curExpr[1].process_expression(vars, classDef, local_vars=local_vars)
@@ -677,21 +681,21 @@ class StatementBlock(): # Used to store begin blocks
         self.local_vars = {}
         self.expr = []
         self.classDef = classDef
-        #print("YE: ", val)
+
         if (val[0] == InterpreterBase.LET_DEF): # if it is a let statement, generate the local variables 
             self.local_vars = {}
             for x in val[1]:
                 if (x[1] in self.local_vars.keys()):
                     self.classDef.interpreter.error(ErrorType.NAME_ERROR)
                 var_type = x[0]
-                finStr = (var_type.split('@'))[0]
+                finStr = (var_type.split(InterpreterBase.TYPE_CONCAT_CHAR))[0]
 
-                if (len(var_type.split('@')) > 1):
-                    for t in (var_type.split('@')[1:]):
+                if (len(var_type.split(InterpreterBase.TYPE_CONCAT_CHAR)) > 1):
+                    for t in (var_type.split(InterpreterBase.TYPE_CONCAT_CHAR)[1:]):
                         v = t
                         if (t in classDef.TemplateVars.keys()):
                             v = classDef.TemplateVars[t]
-                        finStr = finStr + '@' + v
+                        finStr = finStr + InterpreterBase.TYPE_CONCAT_CHAR + v
                 var_type = finStr
                 if (var_type in classDef.TemplateVars.keys()):
                     var_type = classDef.TemplateVars[(var_type)]
@@ -739,7 +743,6 @@ class StatementBlock(): # Used to store begin blocks
             if (expr.expression[0] == InterpreterBase.RETURN_DEF): # if its a return expression then set the return flag to true and return
                 val = expr.process_expression(vars, classDef, call_dict=local_call_dict, local_vars=local_vars, exception_stack=exception_stack)
 
-                #print("HEE HEE: ", val)
                 if(call_dict):
                     call_dict["ret"] = True
                 if(local_call_dict["exc"]):
@@ -767,11 +770,11 @@ class StatementBlock(): # Used to store begin blocks
 
 class Class(): # Class object to create instances of classes
     def __init__(self, class_name, interpreter, sub_class=None):
-        if ((class_name.split('@'))[0] not in interpreter.classDict.keys()):
+        if ((class_name.split(InterpreterBase.TYPE_CONCAT_CHAR))[0] not in interpreter.classDict.keys()):
             interpreter.error(ErrorType.TYPE_ERROR)
 
         self.name = class_name
-        class_name = (class_name.split('@'))[0]
+        class_name = (class_name.split(InterpreterBase.TYPE_CONCAT_CHAR))[0]
         self.interpreter = interpreter
         self.SubClass = sub_class
         self.BaseClass = None
@@ -779,36 +782,31 @@ class Class(): # Class object to create instances of classes
         self.class_type = interpreter.classDict[class_name]["ClassType"]
 
         if (self.class_type == InterpreterBase.TEMPLATE_CLASS_DEF):
-            #if (len(self.name.split('@')) > 1):
             template_vars = interpreter.classDict[class_name]["TemplateVars"]
-            if (len(template_vars) != (len(self.name.split('@'))-1)):
+            if (len(template_vars) != (len(self.name.split(InterpreterBase.TYPE_CONCAT_CHAR))-1)):
                 self.interpreter.error(ErrorType.TYPE_ERROR)
-            if (len(self.name.split('@')) > 1):  
-                converted_vars = (self.name.split('@'))[1:]
+            if (len(self.name.split(InterpreterBase.TYPE_CONCAT_CHAR)) > 1):  
+                converted_vars = (self.name.split(InterpreterBase.TYPE_CONCAT_CHAR))[1:]
                 for x, y in zip(template_vars, converted_vars):
                     self.TemplateVars[x] = y
-                #self.TemplateVars = {x : y for x, y in zip(template_vars, converted_vars)}
                 for t_type in self.TemplateVars.values():
                     if ((t_type not in Interpreter.prim_types or t_type == InterpreterBase.VOID_DEF) and (t_type not in interpreter.classDict)):
-                        #print(class_name)
                         self.interpreter.error(ErrorType.TYPE_ERROR)
 
-        #print(self.name)
-        #print(self.TemplateVars)
         if ("BaseClass" in interpreter.classDict[class_name].keys()):
             self.BaseClass = Class(interpreter.classDict[class_name]["BaseClass"], interpreter, sub_class=self)
         self.fields = {}
         for x, val in interpreter.classDict[class_name]["Fields"].items():
             var_type = val["Type"]
 
-            finStr = (var_type.split('@'))[0]
+            finStr = (var_type.split(InterpreterBase.TYPE_CONCAT_CHAR))[0]
 
-            if (len(var_type.split('@')) > 1):
-                for t in (var_type.split('@')[1:]):
+            if (len(var_type.split(InterpreterBase.TYPE_CONCAT_CHAR)) > 1):
+                for t in (var_type.split(InterpreterBase.TYPE_CONCAT_CHAR)[1:]):
                     v = t
                     if (t in self.TemplateVars.keys()):
                         v = self.TemplateVars[t]
-                    finStr = finStr + '@' + v
+                    finStr = finStr + InterpreterBase.TYPE_CONCAT_CHAR + v
             var_type = finStr
             if (var_type in self.TemplateVars.keys()):
                 var_type = self.TemplateVars[(var_type)]
@@ -832,16 +830,11 @@ class Class(): # Class object to create instances of classes
                 var_val = val["Value"]
             self.fields[x] = {"Type" : var_type, "Value" : Value.getObj(var_val, self)}
 
-
-       # self.fields = {x : {"Type" : val["Type"], "Value" : Value.getObj(val["Value"], self)}  for x, val in interpreter.classDict[class_name]["Fields"].items()} # Generate a dictionary of fields in class each of which contain an object (expression, or value)
         for i in self.fields.keys():
-           # print(self.fields[i]["Type"])
-         #   if (self.fields[i]["Type"] in self.TemplateVars.keys()):
-              #  self.fields[i]["Type"] = self.TemplateVars[(self.fields[i]["Type"])]
             if (not self.fields[i]["Value"].check_type(self.fields[i]["Type"])):
                 print(self.fields[i]["Value"].type, self.fields[i]["Type"])
                 self.interpreter.error(ErrorType.TYPE_ERROR)
-        #print(self.fields)
+
         self.methods =  {x : Method(val, self) for x, val in interpreter.classDict[class_name]["Methods"].items()} # Generate a dictionary of methods in class each of which contain a method object 
 
     def process_class(class_info, interpreter): # Generate a dictionary entry for the class using the parsed program input
@@ -894,12 +887,12 @@ class Class(): # Class object to create instances of classes
                 return False
 
     def is_valid_template(template_name, interpreter):
-        class_name = (template_name.split('@'))[0]
+        class_name = (template_name.split(InterpreterBase.TYPE_CONCAT_CHAR))[0]
         if (class_name in interpreter.classDict):
             if (interpreter.classDict[class_name]["ClassType"] == InterpreterBase.TEMPLATE_CLASS_DEF):
-                return (len(template_name.split('@')) - 1) == len(interpreter.classDict[class_name]["TemplateVars"])
+                return (len(template_name.split(InterpreterBase.TYPE_CONCAT_CHAR)) - 1) == len(interpreter.classDict[class_name]["TemplateVars"])
             else:
-                return (len(template_name.split('@')) <= 1)
+                return (len(template_name.split(InterpreterBase.TYPE_CONCAT_CHAR)) <= 1)
         else:
             return False
 
@@ -933,19 +926,19 @@ class Method(): # Handles class methods
         self.name = method_info["Name"]
         self.return_type = method_info["ReturnType"]
 
-        finStr = (self.return_type.split('@'))[0]
+        finStr = (self.return_type.split(InterpreterBase.TYPE_CONCAT_CHAR))[0]
 
-        if (len(self.return_type.split('@')) > 1):
-            for t in (self.return_type.split('@')[1:]):
+        if (len(self.return_type.split(InterpreterBase.TYPE_CONCAT_CHAR)) > 1):
+            for t in (self.return_type.split(InterpreterBase.TYPE_CONCAT_CHAR)[1:]):
                 v = t
                 if (t in classDef.TemplateVars.keys()):
                     v = classDef.TemplateVars[t]
-                finStr = finStr + '@' + v
+                finStr = finStr + InterpreterBase.TYPE_CONCAT_CHAR + v
         self.return_type = finStr
 
         if (self.return_type in classDef.TemplateVars.keys()):
             self.return_type = classDef.TemplateVars[(self.return_type)]
-        if ((self.return_type not in Interpreter.prim_types) and (self.return_type.split('@'))[0] not in classDef.interpreter.classDict): # check if it is a valid return type
+        if ((self.return_type not in Interpreter.prim_types) and (self.return_type.split(InterpreterBase.TYPE_CONCAT_CHAR))[0] not in classDef.interpreter.classDict): # check if it is a valid return type
             classDef.interpreter.error(ErrorType.TYPE_ERROR)
 
         self.params = method_info["Parameters"]
@@ -977,19 +970,16 @@ class Method(): # Handles class methods
             if (no_skip):
                 vars = {} 
                 for x, val in zip(self.params, params): 
-                                                        #{x[1]: {"Type" : x[0], "Value" : Value.getObj(val, self.classDef)} for x,val in zip(self.params, params)}
                     val_type = x[0]
-                    finStr = (val_type.split('@'))[0]
+                    finStr = (val_type.split(InterpreterBase.TYPE_CONCAT_CHAR))[0]
 
-                    if (len(val_type.split('@')) > 1):
-                        for t in (val_type.split('@')[1:]):
+                    if (len(val_type.split(InterpreterBase.TYPE_CONCAT_CHAR)) > 1):
+                        for t in (val_type.split(InterpreterBase.TYPE_CONCAT_CHAR)[1:]):
                             v = t
                             if (t in self.classDef.TemplateVars.keys()):
                                 v = self.classDef.TemplateVars[t]
-                            finStr = finStr + '@' + v
+                            finStr = finStr + InterpreterBase.TYPE_CONCAT_CHAR + v
                     val_type = finStr
-                    #vars[i]["Type"] = finStr
-
 
                     vars[x[1]] = {"Type" : val_type, "Value" : Value.getObj(val,self.classDef)}
                 for i in vars.keys(): # check if types match, if they do not try to call a superclass if it exists, else throw an error
@@ -1044,7 +1034,6 @@ class Method(): # Handles class methods
                 ret_val = self.expression.process_expression(vars, self.classDef, call_dict=method_call_dict) # Return the called top expression of method
             else:
                 ret_val = None 
-            #print(method_call_dict)
             if (method_call_dict["exc"]):
                 if(try_dict):
                     try_dict["exc"] = True
@@ -1066,7 +1055,6 @@ class Method(): # Handles class methods
                     self.classDef.interpreter.error(ErrorType.TYPE_ERROR)
                 if (not Class.compare_class_types(self.return_type, ret_type, self.classDef.interpreter)):
                     self.classDef.interpreter.error(ErrorType.TYPE_ERROR)
-            #print("VAL" , ret_val)
             if (not ret_val): # if not return type then return the default 
                 if (self.return_type == InterpreterBase.VOID_DEF):
                     return
@@ -1218,22 +1206,6 @@ class Interpreter(InterpreterBase):
     OPERATOR_LOGIC_OR = '|'
     OPERATOR_NOT = '!'
 
-    typeTable = {
-        '+' : "Check",
-        '-' : InterpreterBase.INT_DEF,
-        '*' : InterpreterBase.INT_DEF,
-        '/' : InterpreterBase.INT_DEF,
-        '%' : InterpreterBase.INT_DEF,
-        '>' : InterpreterBase.BOOL_DEF,
-        '<'  : InterpreterBase.BOOL_DEF,
-        '>='  : InterpreterBase.BOOL_DEF,
-        '<='  : InterpreterBase.BOOL_DEF,
-        '=='  : InterpreterBase.BOOL_DEF,
-        '!=' : InterpreterBase.BOOL_DEF,
-        '&' : InterpreterBase.BOOL_DEF,
-        '|'  : InterpreterBase.BOOL_DEF,
-        '!'  : InterpreterBase.BOOL_DEF
-    }
     prim_types = [InterpreterBase.BOOL_DEF, InterpreterBase.INT_DEF, InterpreterBase.STRING_DEF, InterpreterBase.VOID_DEF]
     # Methods
     def __init__(self, console_output=True, inp=None, trace_output=False):

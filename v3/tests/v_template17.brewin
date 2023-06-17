@@ -1,0 +1,32 @@
+(tclass MyTemplatedClass (temp1 temp2)
+  (field temp1 some_shape)
+  (field temp2 some_animal)
+  	  (method void act ((temp1 s) (temp2 a))
+          (let ((temp1 s) (temp2 d))
+            (print "Shape's area: " s)
+            (print "Animal's name: " d)
+          )
+        ) 
+      )
+
+
+(class Square
+  (field int side 10)
+  (method int get_area () (return (* side side)))
+)
+
+(class Dog
+  (field string name "koda")
+  (method string get_name () (return name))
+)
+
+(class main
+  (method void main ()
+    (let ((Square s) (Dog d) (MyTemplatedClass@Square@Dog t))
+      (set s (new Square))
+      (set d (new Dog))
+      (set t (new MyTemplatedClass@Square@Dog))
+      (call t act s d)
+    )
+  )
+)

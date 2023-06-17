@@ -1,0 +1,34 @@
+{
+    "tests": [
+        {
+            "name": "Correctness | test_recursion1",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_inputi",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Correctness | test_set_field",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Incorrectness | test_incompat_operands1",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        },
+        {
+            "name": "Incorrectness | test_if",
+            "score": 1,
+            "max_score": 1,
+            "visibility": "visible"
+        }
+    ]
+}
